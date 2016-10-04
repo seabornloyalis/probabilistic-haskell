@@ -4,11 +4,6 @@
 
 import Data.List
 
---uncomment the below line for quicker, floating point arithmetic
---data Dist a = Dist [(a, Float)]
-
---leave the below line uncommented for exact floating point arithmetic
---(at some performance cost)
 data Dist a = Dist [(a,Rational)]
     deriving( Show)
 
@@ -27,15 +22,13 @@ uniformDist :: [a] -> Dist a
 
 weightedDist :: [(a, Rational)] -> Dist a
 
---deDist :: Dist a -> [(a, Float)]
-deDist :: Dist a -> [(a, Rational)]
+toList :: Dist a -> [(a, Rational)]
 
 mergeEqual :: Eq a => Dist a -> Dist a
 
 possibilities :: Eq a => Dist a -> [a]
 
---probabilityOf :: Eq a => Dist a -> a -> Float
-probabilityOf :: Eq a => Dist a -> a -> Rational
+probabilityOf :: Eq a => Dist a -> (a -> Bool) -> Rational
 
 adjoin :: (a -> Dist b) -> Dist a -> Dist (a,b)
 
@@ -44,6 +37,8 @@ distFil :: (a -> Bool) -> Dist a -> Dist a
 transform :: (a -> Dist b) -> Dist a-> Dist b
 
 combine :: Dist a -> Dist b -> Dist (a, b)
+
+duplicate :: Integral a => a -> Dist b -> Dist [b]
 --
 -- Implementation of Public Interface
 --
@@ -58,27 +53,26 @@ uniformDist xs = Dist (map (\ x -> (x, (1.0 / len))) xs)
 --weightedDist :: [(a, Rational)] -> Dist a
 weightedDist xs = Dist xs
 
---deDist :: Dist a -> [(a, Rational)]
-deDist (Dist valList ) = valList
+--toList :: Dist a -> [(a, Rational)]
+toList (Dist valList ) = valList
 
---mergeEqual :: Eq a => [(a, Rational)] -> [(a, Rational)]
+--mergeEqual :: Eq a => Dist a -> Dist a
 mergeEqual xs =
     let distinct = possibilities xs
     in weightedDist (map (\y -> (y, (foldl (\acc (b,c) ->if (b == y)
                                                         then (acc + c)
-                                                        else acc) 0.0 (deDist xs)))) distinct)
+                                                        else acc) 0.0 (toList xs)))) distinct)
 
 --possibilites :: Eq a => Dist a -> [a]
 possibilities xs =
-    let firsts = map (\(a,b) -> a) (deDist xs)
+    let firsts = map (\(a,b) -> a) (toList xs)
     in nub firsts
 
---probabilityOf :: Eq a => [(a, Rational)] -> a -> Rational
-probabilityOf xs x = 
-    let mergedDist = mergeEqual xs
-    in if (x `elem` (possibilities mergedDist))
-        then snd (head (filter (\(f,s) -> f == x) (deDist mergedDist)))
-        else 0.0  
+--probabilityOf :: Eq a => Dist a -> (a -> Bool) -> Rational
+probabilityOf xs f = 
+    foldl (\acc (a, b) -> if (f a)
+                            then (acc + b)
+                            else (acc)) 0.0 (toList (mergeEqual xs))  
 
 --adjoin :: (a -> Dist b) -> Dist a -> Dist (a,b)
 adjoin f (Dist xs) =
@@ -91,39 +85,33 @@ adjoin f (Dist xs) =
 
 --distFil :: (a -> Bool) -> Dist a -> Dist a
 distFil f xs =
-    let intermed = filter (\ x -> f (fst x)) (deDist xs)
+    let intermed = filter (\ x -> f (fst x)) (toList xs)
     in weightedDist (map (\ (x,y) -> (x, y * (1.0 / totalProb(intermed)))) intermed)
 
---transform :: (a -> Dist b) -> Dist a-> Dist b
-transform f xs = weightedDist (concat (map (\([(x, y)], z) -> [(x, y*z)]) (map (\ (a,b) -> (deDist (f a), b)) (deDist xs))))
+--currently raises an exception for non-exhaustive patterns in lambda
+--transform :: (a -> Dist b) -> Dist a -> Dist b
+transform f xs = weightedDist (concat (map (\([(x, y)], z) -> [(x, y*z)]) (map (\ (a,b) -> (toList (f a), b)) (toList xs))))
 
 --combine :: Dist a -> Dist b -> Dist (a, b)
-combine xs ys = weightedDist (concat (map (\ x -> map (\ y -> ((fst x, fst y), snd x * snd y)) (deDist ys)) (deDist xs)))
+combine xs ys = weightedDist (concat (map (\ x -> map (\ y -> ((fst x, fst y), snd x * snd y)) (toList ys)) (toList xs)))
 
---deriveDists :: Integral a => Dist a -> Dist b -> Dist [b]
---deriveDists nums xs = concat (map (\([(x,y)],z) -> [(x,y*z)]) (map (\(a, b) -> ((duplicateDist a xs), b)) nums))
+--duplicate :: Dist a -> Int -> Dist [a]
+duplicate num xs = if (num == 1)
+                    then weightedDist (map (\(a,b) -> ([a], b)) (toList xs))
+                    else weightedDist (map (\((a,b),c) -> (a:b,c)) (toList (combine xs (duplicate (num-1) xs))))
+
+
 --
 -- Private functions
 --
 totalProb :: [(a,Rational)] -> Rational
 totalProb xs = foldl (\acc (a,b) -> acc + b) 0.0 xs
 
-{-duplicateDist :: Integral a => a -> [(b, Rational)] -> [([b], Rational)]
-duplicateDist num xs = duplicateDistHelper num xs
-
-duplicateDistHelper :: Integral a => a -> [(b, Rational)] -> [([b], Rational)]
-duplicateDistHelper num xs = if (num == 1)
-                            then map (\(a,b) -> ([a], b)) xs
-                            else map (\((a,b),c) -> (a:b,c)) (combine xs (duplicateDistHelper (num-1) xs))
-
-deriveDists :: Integral a => [(a, Rational)] -> [(b, Rational)] -> [([b], Rational)]
-deriveDists nums xs = concat (map (\([(x,y)],z) -> [(x,y*z)]) (map (\(a, b) -> ((duplicateDist a xs), b)) nums))
--}
 --A
-{-solutionAd6 :: [(Int, Rational)]
+solutionAd6 :: Dist Int
 solutionAd6 = uniformDist[1..6]
 
-solutionAd12 :: [(Int, Rational)]
+solutionAd12 :: Dist Int
 solutionAd12 = uniformDist[1..12]
 
 --B
@@ -131,55 +119,68 @@ solutionB :: Rational
 solutionB = 
     let d6 = uniformDist[1..6]
         d12= uniformDist[1..12]
-    in probabilityOf (map (\((x, y), z) -> ((x+y), z)) (combine d6 d12)) 11
+    in probabilityOf (fmap (\(x, y) -> (x+y)) (combine d6 d12)) (== 11)
 
 --C
-solutionC1 :: [(Int, Rational)] -> Rational
+solutionC1 :: Dist Int -> Rational
 solutionC1 xs =
     let d = combine xs xs
-    in (probabilityOf d (6,12)) + (probabilityOf d (12,6))
+        equal = (\(a,b) -> (((a,b) == (12, 6)) || ((a,b) == (6, 12)))) 
+    in probabilityOf d equal
 
-solutionC2 :: [(Int, Rational)] -> Rational
+solutionC2 :: Dist Int-> Rational
 solutionC2 xs =
     let ds = combine xs xs
-    in (probabilityOf (collapse (\(a,b) -> b) ds) 12) -
-        (probabilityOf (collapse (\(a,b) -> a) ds) 12) - (probabilityOf ds (12,12))
+        oned20 = (\(a, b) -> ((a == 12 && b /= 12) || (b == 12 && a /= 12)))
+    in probabilityOf ds oned20
 --D
-solutionD :: [(Int, Rational)] -> Rational
+solutionD :: Dist Int -> Rational
 solutionD xs = (solutionC1 xs) * solutionB
 
 --E
 --F
+
+--solutions F - I compile but raise exceptions from their calls to transform
 solutionF :: Rational
 solutionF =
     let d6 = uniformDist [1..6]
         coin = uniformDist "HT"
-        joint = deriveDists d6 coin
-    in probabilityOf (map (\(a, b) -> (foldl (\acc x -> if x == 'H' then acc + 1 else acc) 0 a, b)) joint) 3
-
+        enlist = fmap (\a -> [a]) coin
+        joint = transform (\a -> duplicate a coin) d6
+        threecount = (\a -> foldl (\acc b -> if (b == 'H')
+                                            then (acc + 1)
+                                            else (acc)) 0 a)
+    in probabilityOf (fmap threecount joint) (\a -> (a == 3))
 --G
 solutionG :: Rational
 solutionG =
     let d6 = uniformDist [1..6]
         coin = uniformDist "HT"
-    in totalProb (filter (\(a, b) -> a >= 3) (map (\(a, b) -> (foldl (\acc x -> if x == 'H' then acc + 1 else acc) 0 a, b)) (deriveDists d6 coin)))
-
+        enlist = fmap (\a -> [a]) coin
+        joint = transform (\a -> duplicate a coin) d6
+        threecount = (\a -> foldl (\acc b -> if (b == 'H')
+                                            then (acc + 1)
+                                            else (acc)) 0 a)
+    in probabilityOf (fmap threecount joint) (\a -> (a >= 3))
 --H
 --I
---solutionI :: Rational
---solutionI =
---    let d6 = uniformDist [1..6]
---        coin = uniformDist "HT"
---        joint = deriveDists d6 coin
---    in totalProb (filter (\((i, j), k) -> (length j) == 3) (distFil (\((a, b), c) -> a == 3) (map (\(a, b) -> (((foldl (\acc x -> if x == 'H' then acc + 1 else acc) 0 a), a), b)) joint)))
---ambiguous types for Eq
+solutionI :: Rational
+solutionI =
+    let d6 = uniformDist [1..6]
+        coin = uniformDist "HT"
+        joint = transform (\a -> duplicate a coin) d6
+        threecount = (\a -> ((foldl (\acc b -> if (b == 'H')
+                                            then (acc + 1)
+                                            else (acc)) 0 a), length a))
+        justthree = distFil (\(a,b) -> a == 3) (fmap threecount joint)
+    in probabilityOf justthree (\(a,b) -> b == 3)
 
 --J
 --K
 --L
 --M
 --N
-factorial :: Int -> Int
+{-factorial :: Int -> Int
 factorial n = if n < 2 then 1 else n * factorial (n-1)
 
 choose :: Int -> Int -> Rational
@@ -195,22 +196,11 @@ solutionN xs =
     in (probabilityOf (combine xs xs) (12,12)) * (binomialDist 30 3 gt16)
 --O
 --P
-diceIntToDist :: Int -> [(Int, Rational)]
-diceIntToDist x
-        | x == 4    = uniformDist [1..4]
-        | x == 6    = uniformDist [1..6]
-        | x == 8    = uniformDist [1..8]
-        | x == 10   = uniformDist [1..10]
-        | x == 12   = uniformDist [1..12]
-        | otherwise = uniformDist [1..20]
-
---assuming with replacement
---solutionP :: [(Int, Rational)] -> Rational
---solutionP xs =
---    let dice = transform diceIntToDist xs
---    in 30.0 * totalProb (filter (\(a,b) -> a > 16) (map (\((a, b), c) -> ((a+b), c)) (combine dice dice)))
---generates exception non-exhaustive patterns in lambda
+--Q
+--R
+--S
+--T
+--U
 -}
 --Look up:
---how to define new types in Haskell
 --module definition
