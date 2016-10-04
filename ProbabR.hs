@@ -1,4 +1,4 @@
---ProbabFP.hs
+--ProbabR.hs
 --Author: Chad Myles
 --Date: 9/26/16
 
@@ -20,13 +20,13 @@ module Probab (
 
 import Data.List
 
-data Dist a = Dist [(a, Float)]
+data Dist a = Dist [(a,Rational)]
     deriving( Show)
 
 instance Functor Dist where
     fmap f (Dist xs) = Dist (map (\(x,p) -> (f x, p)) xs)
 
---TODO: make sure sum of Floats = 1 and none are negative
+--TODO: make sure sum of Rationals = 1 and none are negative
 
 --
 -- Public Interface
@@ -36,15 +36,15 @@ unit :: a -> Dist a
 
 uniformDist :: [a] -> Dist a
 
-weightedDist :: [(a, Float)] -> Dist a
+weightedDist :: [(a, Rational)] -> Dist a
 
-toList :: Dist a -> [(a, Float)]
+toList :: Dist a -> [(a, Rational)]
 
 mergeEqual :: Eq a => Dist a -> Dist a
 
 possibilities :: Eq a => Dist a -> [a]
 
-probabilityOf :: Eq a => Dist a -> (a -> Bool) -> Float
+probabilityOf :: Eq a => Dist a -> (a -> Bool) -> Rational
 
 adjoin :: (a -> Dist b) -> Dist a -> Dist (a,b)
 
@@ -66,13 +66,13 @@ unit x = Dist [(x,1.0)]
 uniformDist xs = Dist (map (\ x -> (x, (1.0 / len))) xs)
     where len = fromIntegral (length xs)
 
---weightedDist :: [(a, Float)] -> Dist a
+--weightedDist :: [(a, Rational)] -> Dist a
 weightedDist xs = Dist xs
 
---toList :: Dist a -> [(a, Float)]
+--toList :: Dist a -> [(a, Rational)]
 toList (Dist valList ) = valList
 
---mergeEqual :: Eq a => [(a, Float)] -> [(a, Float)]
+--mergeEqual :: Eq a => Dist a -> Dist a
 mergeEqual xs =
     let distinct = possibilities xs
     in weightedDist (map (\y -> (y, (foldl (\acc (b,c) ->if (b == y)
@@ -84,7 +84,7 @@ possibilities xs =
     let firsts = map (\(a,b) -> a) (toList xs)
     in nub firsts
 
---probabilityOf :: Eq a => [(a, Float)] -> a -> Float
+--probabilityOf :: Eq a => Dist a -> (a -> Bool) -> Rational
 probabilityOf xs f = 
     foldl (\acc (a, b) -> if (f a)
                             then (acc + b)
@@ -106,7 +106,7 @@ distFil f xs =
 
 --transform :: (a -> Dist b) -> Dist a -> Dist b
 transform f xs = 
-    --create ([(b, Float)], Float) list
+    --create ([(b, Rational)], Rational) list
     let intermed = (map (\(a, b) -> ((toList (f a)), b)) (toList xs))
     in weightedDist (concat (map (\(a, b) -> (map (\(c,d) -> (c, b*d)) a)) intermed))
 
@@ -122,6 +122,6 @@ duplicate num xs = if (num == 1)
 --
 -- Private functions
 --
-totalProb :: [(a,Float)] -> Float
+totalProb :: [(a,Rational)] -> Rational
 totalProb xs = foldl (\acc (a,b) -> acc + b) 0.0 xs
 
