@@ -7,3 +7,17 @@ All problems are solved quickly with the exception of
 problem N which seemingly hit combinatorics (I ended its
 execution after letting it run for roughly 2 hours.)
 
+To compile/run:
+Run:
+	config.sh R	--to configure with rational arithmetic
+	config.sh FP	--to configure with floating point arithmetic
+
+Then to compile run:
+	ghc Solutions.hs
+
+In order to run, run:
+	Solutions [args] --where args is the letters of the desired solutions
+
+For example:
+	Solutions A B C
+will print the solutions to problems A, B, and C
