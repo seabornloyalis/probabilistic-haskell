@@ -76,6 +76,19 @@ solutionI =
 --L
 --M
 --N
+solutionN :: Dist Int -> Float
+solutionN xs =
+    let d12 = uniformDist [1..12]
+        twodice = combine xs xs
+        test = duplicate 30 (fmap (\(a,b) -> if ((a + b) > 16)
+                                            then "R"
+                                            else "LorM") (combine d12 d12))
+        threeGT16 = probabilityOf test (\a -> (foldl (\acc b -> if (b == "R")
+                                                            then (acc + 1)
+                                                            else acc) 0 a) == 3)
+    in (probabilityOf twodice (\(a, b) -> (a == 12) && (b == 12))) * threeGT16
+
+
 {-factorial :: Int -> Int
 factorial n = if n < 2 then 1 else n * factorial (n-1)
 

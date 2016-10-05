@@ -76,7 +76,20 @@ solutionI =
 --L
 --M
 --N
-{-factorial :: Int -> Int
+solutionN :: Dist Int -> Rational
+solutionN xs =
+    let d12 = uniformDist [1..12]
+        twodice = combine xs xs
+        test = duplicate 30 (fmap (\(a,b) -> if ((a + b) > 16)
+                                            then "R"
+                                            else "LorM") (combine d12 d12))
+        threeGT16 = probabilityOf test (\a -> (foldl (\acc b -> if (b == "R")
+                                                            then (acc + 1)
+                                                            else acc) 0 a) == 3)
+    in (probabilityOf twodice (\(a, b) -> (a == 12) && (b == 12))) * threeGT16
+    
+{-
+factorial :: Int -> Int
 factorial n = if n < 2 then 1 else n * factorial (n-1)
 
 choose :: Int -> Int -> Rational
@@ -85,11 +98,13 @@ choose n k = (fromIntegral(factorial n)) / (fromIntegral((factorial k) * (factor
 binomialDist :: Int -> Int -> Rational -> Rational
 binomialDist tries k p = (choose tries k)*(p^^(fromIntegral k))*((1.0-p)^^(fromIntegral(tries-k)))
 
-solutionN :: [(Int, Rational)] -> Rational
-solutionN xs =
+solutionNStats :: Dist Int -> Rational
+solutionNStats xs =
     let d12 = uniformDist [1..12]
-        gt16 = (totalProb (filter (\(x,y) -> x > 16) (map (\((a,b),c) -> (a+b, c)) (combine d12 d12))))
-    in (probabilityOf (combine xs xs) (12,12)) * (binomialDist 30 3 gt16)
+        gt16 = (probabilityOf (fmap (\(a,b) -> a+b) (combine d12 d12)) (\a -> a > 16))
+        twodice = (combine xs xs)
+    in (probabilityOf twodice (\(a, b) -> (a == 12) && (b == 12))) * (binomialDist 30 3 gt16)
+-}
 --O
 --P
 --Q
@@ -97,4 +112,3 @@ solutionN xs =
 --S
 --T
 --U
--}
