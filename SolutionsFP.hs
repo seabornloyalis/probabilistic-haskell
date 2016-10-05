@@ -72,7 +72,20 @@ solutionI =
     in probabilityOf justthree (\(a,b) -> b == 3)
 
 --J
+solutionJ :: Float
+solutionJ =
+    let d6 = uniformDist [1..6]
+        coin = uniformDist "HT"
+        intermed = distFil (\a -> a > 4) d6   
+        joint = transform (\a -> duplicate a coin) intermed
+        threecount = (\a -> ((foldl (\acc b -> if (b == 'H')
+                                            then (acc + 1)
+                                            else (acc)) 0 a)))
+    in probabilityOf (fmap threecount joint) (\a -> a == 3)
+
 --K
+solutionK :: Float
+solutionK = solutionI
 --L
 --M
 --N

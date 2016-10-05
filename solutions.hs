@@ -72,6 +72,17 @@ solutionI =
     in probabilityOf justthree (\(a,b) -> b == 3)
 
 --J
+solutionJ :: Rational
+solutionJ =
+    let d6 = uniformDist [1..6]
+        coin = uniformDist "HT"
+        intermed = distFil (\a -> a > 4) d6   
+        joint = transform (\a -> duplicate a coin) intermed
+        threecount = (\a -> ((foldl (\acc b -> if (b == 'H')
+                                            then (acc + 1)
+                                            else (acc)) 0 a)))
+    in probabilityOf (fmap threecount joint) (\a -> a == 3)
+
 --K
 --L
 --M
@@ -88,8 +99,8 @@ solutionN xs =
                                                             else acc) 0 a) == 3)
     in (probabilityOf twodice (\(a, b) -> (a == 12) && (b == 12))) * threeGT16
     
-
-{-factorial :: Int -> Int
+{-
+factorial :: Int -> Int
 factorial n = if n < 2 then 1 else n * factorial (n-1)
 
 choose :: Int -> Int -> Rational
