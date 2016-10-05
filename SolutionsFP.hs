@@ -1,8 +1,38 @@
+module Main where
+
 import System.Environment
 import System.Exit
 import Data.List
-
 import Probab
+
+main :: IO ()
+main = do
+    args <- getArgs
+    putStrLn (concat (map (\a -> (showSolution a) ++ "\n") args))
+
+showSolution :: String -> String
+showSolution "A" =
+    let a = "Solution A part 1: " ++ (show solutionAd6) ++ "\n"
+        b = "Solution A part 2: " ++ (show solutionAd12) ++ "\n"
+    in a ++ b
+runSolution "B" = "Solution B: " ++ (show solutionB) ++ "\n"
+runSolution "C" = 
+    let params = uniformDist [6,8,10,12,20]
+        c1 = "Solution C part 1: " ++ (show (solutionC1 params)) ++ "\n"
+        c2 = "Solution C part 2: " ++ (show (solutionC2 params)) ++ "\n"
+    in "For uniform distribution of d6, d8, d10, d12, d20: \n" ++ c1 ++ c2
+runSolution "D" =
+    let d = "Solution D: " ++ (show (solutionD (uniformDist [6,8,10,12,20]))) ++ "\n"
+    in "For uniform distribution of d6, d8, d10, d12, d20: \n" ++ d
+runSolution "F" = "Solution F: " ++ (show solutionF) ++ "\n"
+runSolution "G" = "Solution G: " ++ (show solutionG) ++ "\n"
+runSolution "I" = "Solution I: " ++ (show solutionI) ++ "\n"
+runSolution "J" = "Solution J: " ++ (show solutionJ) ++ "\n"
+runSolution "K" = "Solution K: " ++ (show solutionK) ++ "\n"
+runSolution "N" =
+    let n = "Solution N: " ++ (show (solutionN (uniformDist [6,8,10,12,20]))) ++ "\n"
+    in "For uniform distribution of d6, d8, d10, d12, d20: \n" ++ n
+runSolution x = "Solution not implemented or argument invalid"
 
 --A
 solutionAd6 :: Dist Int
