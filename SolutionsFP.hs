@@ -8,30 +8,45 @@ import Probab
 main :: IO ()
 main = do
     args <- getArgs
-    putStrLn (concat (map (\a -> (showSolution a) ++ "\n") args))
+    if (null args)
+        then putStrLn (concat (map (\a -> (showSolution a) ++ "\n")
+            ["A", "B", "C", "D", "F", "G", "I", "J", "K"]))
+        else putStrLn (concat (map (\a -> (showSolution a) ++ "\n") args))
 
 showSolution :: String -> String
 showSolution "A" =
-    let a = "Solution A part 1: " ++ (show solutionAd6) ++ "\n"
-        b = "Solution A part 2: " ++ (show solutionAd12) ++ "\n"
+    let p1 = solutionAd6
+        p2 = solutionAd12
+        a = "A.1. throwing a single d6 = " ++ (show p1) ++ "\n"
+        b = "A.2. throwing a single d12 = " ++ (show p2) ++ "\n"
     in a ++ b
-showSolution "B" = "Solution B: " ++ (show solutionB) ++ "\n"
+showSolution "B" =
+    let b = solutionB
+    in  "B. P(d6+d12) = " ++ (show (100 * b)) ++ "%\n"
 showSolution "C" = 
-    let params = uniformDist [6,8,10,12,20]
-        c1 = "Solution C part 1: " ++ (show (solutionC1 params)) ++ "\n"
-        c2 = "Solution C part 2: " ++ (show (solutionC2 params)) ++ "\n"
-    in "For uniform distribution of d6, d8, d10, d12, d20: \n" ++ c1 ++ c2
+    let params = weightedDist [(6,0.19565),(8,0.19565), (12,0.304347), (20,0.304347)]
+        c1 = (solutionC1 params)
+        c2 = (solutionC2 params)
+        p1 = "C.1. P(draw d6 and d12) = " ++ (show (100 * c1)) ++"%\n"
+        p2 = "C.1. P(exactly one d20) = " ++ (show (100 * c2)) ++"%\n"
+    in  p1 ++ p2
 showSolution "D" =
-    let d = "Solution D: " ++ (show (solutionD (uniformDist [6,8,10,12,20]))) ++ "\n"
-    in "For uniform distribution of d6, d8, d10, d12, d20: \n" ++ d
-showSolution "F" = "Solution F: " ++ (show solutionF) ++ "\n"
-showSolution "G" = "Solution G: " ++ (show solutionG) ++ "\n"
-showSolution "I" = "Solution I: " ++ (show solutionI) ++ "\n"
-showSolution "J" = "Solution J: " ++ (show solutionJ) ++ "\n"
-showSolution "K" = "Solution K: " ++ (show solutionK) ++ "\n"
+    let params = weightedDist [(6,0.19565),(8,0.19565), (12,0.304347), (20,0.304347)]
+        d = solutionD params
+    in "D. P(draw d6 and d12, throw 11) " ++ (show d) ++ " : " ++ (show (100*d)) ++ "%\n"
+showSolution "F" = "F. Throw d6; toss that many coins; probability of 3 heads = "
+                    ++ (show (100 * solutionF)) ++ "%\n"
+showSolution "G" = "G. Throw d6; toss that many coins; probability of at least 3 heads = "
+                    ++ (show (100*solutionG)) ++ "%\n"
+showSolution "I" = "I. Throw d6; toss that many coins; see 3 heads; P(N=3) = "
+                    ++ (show (100*solutionI)) ++ "%\n"
+showSolution "J" = "J. Throw d6; toss that many coins; N > 4; P(heads=3) = "
+                    ++ (show (100*solutionJ)) ++ "%\n"
+showSolution "K" = "K. (identical to I) =" ++ (show (100*solutionK)) ++ "%\n"
 showSolution "N" =
-    let n = "Solution N: " ++ (show (solutionN (uniformDist [6,8,10,12,20]))) ++ "\n"
-    in "For uniform distribution of d6, d8, d10, d12, d20: \n" ++ n
+    let params = weightedDist [(6,0.19565),(8,0.19565), (12,0.304347), (20,0.304347)]
+    in "N. P(draw d12+d12 and put 3 marks in right) = "
+        ++ (show (100*(solutionN params))) ++ "%\n"
 showSolution x = "Solution not implemented or argument invalid"
 
 --A
@@ -132,20 +147,6 @@ solutionN xs =
     in (probabilityOf twodice (\(a, b) -> (a == 12) && (b == 12))) * threeGT16
 
 
-{-factorial :: Int -> Int
-factorial n = if n < 2 then 1 else n * factorial (n-1)
-
-choose :: Int -> Int -> Rational
-choose n k = (fromIntegral(factorial n)) / (fromIntegral((factorial k) * (factorial (n - k))))
-
-binomialDist :: Int -> Int -> Rational -> Rational
-binomialDist tries k p = (choose tries k)*(p^^(fromIntegral k))*((1.0-p)^^(fromIntegral(tries-k)))
-
-solutionN :: [(Int, Rational)] -> Rational
-solutionN xs =
-    let d12 = uniformDist [1..12]
-        gt16 = (totalProb (filter (\(x,y) -> x > 16) (map (\((a,b),c) -> (a+b, c)) (combine d12 d12))))
-    in (probabilityOf (combine xs xs) (12,12)) * (binomialDist 30 3 gt16)
 --O
 --P
 --Q
