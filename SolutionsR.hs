@@ -33,7 +33,7 @@ showSolution "C" =
 showSolution "D" =
     let params = weightedDist [(6,9/46),(8,9/46), (12,14/46), (20,14/46)]
         d = solutionD params
-    in "D. P(draw d6 and d12, throw 11) "++ (show d)++ " : "++ (show (100*d))++ "%\n"
+    in "D. P(draw d6 and d12, throw 11) = "++ (show (100*(fromRational d)))++ "%\n"
 showSolution "F" = "F. Throw d6; toss that many coins; probability of 3 heads = "
                     ++ (show (100 * (fromRational solutionF))) ++ "%\n"
 showSolution "G" = "G. Throw d6; toss that many coins; probability of at least 3 heads = "
